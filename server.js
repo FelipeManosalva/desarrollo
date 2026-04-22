@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const PORT = 3000;
- 
+
 function generateRows() {
   const statuses = [
     { label: 'Estudio', cls: 'estudio' },
@@ -23,20 +23,27 @@ function generateRows() {
     const diag = diags[i % diags.length];
     const st = statuses[statusSeq[i-1]];
     const pr = priorities[prioSeq[i-1]];
-    rows += `<tr>
+    rows += `<tr
+      data-id="${i}"
+      data-patient="Texto texto texto"
+      data-rut="12.345.678-9"
+      data-diag="${diag}"
+      data-status="${st.label}"
+      data-priority="${prioSeq[i-1]}"
+      data-date="2024-${String((i%12)+1).padStart(2,'0')}-${String((i%28)+1).padStart(2,'0')}">
       <td class="id-cell">${id}</td>
       <td class="patient-cell">Texto texto texto</td>
       <td class="rut-cell">12.345.678-9</td>
       <td class="dx-cell">${diag}</td>
       <td><span class="badge badge-${st.cls}"><span class="badge-dot"></span>${st.label}</span></td>
       <td><span class="priority priority-${pr}"></span></td>
-      <td>DD-MM-AAAA</td>
+      <td>2024-${String((i%12)+1).padStart(2,'0')}-${String((i%28)+1).padStart(2,'0')}</td>
       <td><button class="action-btn">&#x229E;</button></td>
     </tr>`;
   }
   return rows;
 }
- 
+
 app.get('/', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html lang="es">
@@ -79,7 +86,12 @@ app.get('/', (req, res) => {
     .table-wrapper { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
     table { width: 100%; border-collapse: collapse; font-size: .825rem; }
     thead { background: var(--surface2); border-bottom: 1px solid var(--border); }
-    th { padding: .75rem 1rem; text-align: left; font-size: .72rem; font-weight: 600; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+    th { padding: .75rem 1rem; text-align: left; font-size: .72rem; font-weight: 600; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; user-select: none; }
+    th.sortable { cursor: pointer; }
+    th.sortable:hover { color: var(--text); }
+    th.sort-asc .sort-icon::after { content: ' ↑'; color: var(--accent); }
+    th.sort-desc .sort-icon::after { content: ' ↓'; color: var(--accent); }
+    th:not(.sort-asc):not(.sort-desc) .sort-icon::after { content: ' ↕'; opacity: 0.35; }
     td { padding: .7rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-dim); white-space: nowrap; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: rgba(255,255,255,.02); }
@@ -147,20 +159,20 @@ app.get('/', (req, res) => {
       </div>
     </div>
     <div class="table-wrapper">
-      <table>
+      <table id="mainTable">
         <thead>
           <tr>
-            <th>ID CASO</th>
-            <th>NOMBRE PACIENTE ↕</th>
-            <th>RUT ↕</th>
-            <th>DIAGNÓSTICO ▽</th>
-            <th>ESTADO DEL CASO ▽</th>
-            <th>PRIORIDAD ▽</th>
-            <th>ÚLTIMO EVENTO ↕</th>
+            <th class="sortable" data-col="id">ID CASO<span class="sort-icon"></span></th>
+            <th class="sortable" data-col="patient">NOMBRE PACIENTE<span class="sort-icon"></span></th>
+            <th class="sortable" data-col="rut">RUT<span class="sort-icon"></span></th>
+            <th class="sortable" data-col="diag">DIAGNÓSTICO<span class="sort-icon"></span></th>
+            <th class="sortable" data-col="status">ESTADO DEL CASO<span class="sort-icon"></span></th>
+            <th class="sortable" data-col="priority">PRIORIDAD<span class="sort-icon"></span></th>
+            <th class="sortable" data-col="date">ÚLTIMO EVENTO<span class="sort-icon"></span></th>
             <th>ACCIÓN</th>
           </tr>
         </thead>
-        <tbody>${generateRows()}</tbody>
+        <tbody id="tableBody">${generateRows()}</tbody>
       </table>
       <div class="pagination">
         <span class="page-nav">← Anterior</span>
@@ -174,10 +186,58 @@ app.get('/', (req, res) => {
     </div>
   </main>
 </div>
+<script>
+  let currentCol = null;
+  let currentDir = 'asc';
+
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (currentCol === col) {
+        currentDir = currentDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentCol = col;
+        currentDir = 'asc';
+      }
+      // Update header classes
+      document.querySelectorAll('th.sortable').forEach(h => {
+        h.classList.remove('sort-asc', 'sort-desc');
+      });
+      th.classList.add(currentDir === 'asc' ? 'sort-asc' : 'sort-desc');
+      sortTable(col, currentDir);
+    });
+  });
+
+  function sortTable(col, dir) {
+    const tbody = document.getElementById('tableBody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      let valA = a.dataset[col] || '';
+      let valB = b.dataset[col] || '';
+      // Numeric sort for id and priority
+      if (col === 'id' || col === 'priority') {
+        valA = parseFloat(valA) || 0;
+        valB = parseFloat(valB) || 0;
+        return dir === 'asc' ? valA - valB : valB - valA;
+      }
+      // Date sort
+      if (col === 'date') {
+        valA = new Date(valA).getTime() || 0;
+        valB = new Date(valB).getTime() || 0;
+        return dir === 'asc' ? valA - valB : valB - valA;
+      }
+      // String sort
+      return dir === 'asc'
+        ? valA.localeCompare(valB, 'es')
+        : valB.localeCompare(valA, 'es');
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
+</script>
 </body>
 </html>`);
 });
- 
+
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
