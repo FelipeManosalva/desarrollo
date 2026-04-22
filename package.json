@@ -1,7 +1,6 @@
 {
   "name": "desarrollo",
   "version": "1.0.0",
-  "description": "Sitio web simple con Node y Express",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
