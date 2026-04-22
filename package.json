@@ -1,9 +1,10 @@
 {
-  "name": "hola-docker",
+  "name": "hola-mundo",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Hola Mundo con Node.js + Express",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2"
