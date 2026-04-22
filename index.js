@@ -1,8 +1,8 @@
 const express = require("express");
 const app = express();
 
-// 👇 ESTO ES LO MÁS IMPORTANTE
-const PORT = process.env.PORT || process.env.APP_PORT || 3000;
+// 👇 ESTO ES LO QUE LO ARREGLA
+const PORT = process.env.PORT || 8080;
 
 app.get("/", (req, res) => {
   res.send("<h1>Hola mundo 🚀</h1>");
@@ -10,4 +10,3 @@ app.get("/", (req, res) => {
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Servidor corriendo en puerto " + PORT);
-});
