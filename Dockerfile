@@ -2,11 +2,15 @@ FROM node:18
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+# copiar solo package.json primero
+COPY package.json ./
 
+# instalar limpio
+RUN npm install --production
+
+# copiar resto
 COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["node", "index.js"]
