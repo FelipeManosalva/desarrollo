@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 80;
 
 app.get('/', (req, res) => {
   res.send(`<!DOCTYPE html>
@@ -60,9 +60,7 @@ app.get('/', (req, res) => {
       animation: fadeUp 0.7s ease forwards 0.4s;
     }
 
-    h1 span {
-      color: #00ff96;
-    }
+    h1 span { color: #00ff96; }
 
     .line {
       width: 60px;
@@ -101,9 +99,7 @@ app.get('/', (req, res) => {
       from { opacity: 1; transform: scaleX(0); }
       to   { opacity: 1; transform: scaleX(1); }
     }
-    @keyframes blink {
-      50% { opacity: 0; }
-    }
+    @keyframes blink { 50% { opacity: 0; } }
   </style>
 </head>
 <body>
